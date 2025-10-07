@@ -1,0 +1,95 @@
+# Vehicle Mapping RAG - Cline Configuration
+
+## Project Context
+
+This is a specialized RAG (Retrieval-Augmented Generation) chat system for querying vehicle mapping data between VDAT and Cox automotive systems. Built with LangChain, Chroma, pandas, and Ollama for local AI-powered vehicle data queries.
+
+## Key Files
+
+**Core RAG System:**
+- `vehicle_rag.py` - Reusable RAG class (shared by CLI and web)
+- `csv_demo.py` - CLI vehicle mapping RAG chat system
+- `data/vdat_cox_mapping.csv` - Vehicle mapping CSV data (VDAT to Cox)
+
+**Web Application:**
+- `app.py` - Flask web server with REST API
+- `templates/index.html` - Web interface HTML
+- `static/styles.css` - Web interface styling
+- `static/app.js` - Frontend JavaScript
+- `README_FLASK.md` - Web application documentation
+- `QUICK_START_WEB.md` - Quick start guide for web interface
+
+**Documentation & Testing:**
+- `memory_bank/` - Project documentation and context
+- `requirements.txt` - Python dependencies
+- `venv/` - Virtual environment
+- `test_consistency.py`, `test_simple_queries.py` - Test files
+
+## Development Guidelines
+
+1. Always activate virtual environment before running code
+2. Use memory_bank documentation for project context
+3. Test with Ollama models: mxbai-embed-large and llama3.2:3b
+4. CSV file must exist at `data/vdat_cox_mapping.csv` with required columns
+5. Use "npm start" not "npm run start" for any web servers (though not applicable to this Python project)
+
+## Dependencies
+
+- Core: langchain, langchain-community, langchain-ollama, chromadb, ollama, **pandas**
+- Supporting: numpy, requests
+- Development: ruff (linting/formatting)
+- Optional: jupyter, pytest
+
+## CSV Data Requirements
+
+The system requires a CSV file at `data/vdat_cox_mapping.csv` with these columns:
+
+**Required:**
+- vdatModelId, vdatMakeName, vdatModelName
+- coxMakeName, coxMakeCode, coxModelName, coxModelCode
+- coxSeriesName, coxSeriesCode, coxTrimName, coxTrimCode
+- coxBodyStyleName, coxBodyStyleCode, coxFuelTypeCode, coxFuelTypeName
+
+**Optional:**
+- Needs Bodystyle, Needs Fuel Type
+- Map to Multiple Cox Models, Map to Multiple Cox Trims
+
+## Common Commands
+
+```bash
+# Activate environment
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the vehicle mapping RAG chat
+python csv_demo.py
+
+# Check Ollama models
+ollama list
+
+# Verify CSV exists and structure
+ls -lh data/vdat_cox_mapping.csv
+head -n 1 data/vdat_cox_mapping.csv
+
+# Test pandas can read CSV
+python -c "import pandas as pd; print(pd.read_csv('data/vdat_cox_mapping.csv').shape)"
+```
+
+## Memory Bank Usage
+
+Always check and update memory_bank files when making significant changes:
+
+- project_overview.md - High-level project context (vehicle mapping use cases)
+- architecture.md - Technical implementation details (CSV processing, RAG chain)
+- dependencies.md - Dependency information and rationale (includes pandas)
+- usage_examples.md - Usage patterns and customization examples (vehicle queries)
+
+## Query Examples
+
+The system supports various query types:
+- Simple trim queries: "How many Cox trims for Audi A3 Sportback e-tron?"
+- Comparison queries: "I have [list]. What's missing for BMW M5?"
+- Special requirements: "Which vehicles need body style mapping?"
+- Search by ID: "What's in audi_a3-sportback-e-tron?"

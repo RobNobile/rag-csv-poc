@@ -1,0 +1,41 @@
+# Ruff configuration for basic linting and formatting
+# Documentation: https://docs.astral.sh/ruff/configuration/
+
+# Basic settings
+line-length = 88
+indent-width = 4
+target-version = "py38"
+
+[lint]
+# Enable essential rule sets for Python best practices
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings  
+    "F",   # Pyflakes (undefined names, unused imports, etc.)
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming (naming conventions)
+    "UP",  # pyupgrade (Python version upgrades)
+    "B",   # flake8-bugbear (common bugs and design problems)
+    "C4",  # flake8-comprehensions (better list/dict comprehensions)
+    "PIE", # flake8-pie (unnecessary code)
+    "SIM", # flake8-simplify (code simplification)
+]
+
+# Ignore specific rules that might be too strict for basic usage
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "B008",   # Do not perform function calls in argument defaults
+    "N806",   # Variable in function should be lowercase (allows for ML/AI naming)
+]
+
+# Allow auto-fixing for all enabled rules
+fixable = ["ALL"]
+unfixable = []
+
+[format]
+# Use double quotes for strings
+quote-style = "double"
+# Use trailing commas in multi-line collections
+skip-magic-trailing-comma = false
+# Indent with spaces
+indent-style = "space"
