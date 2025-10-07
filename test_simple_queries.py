@@ -5,7 +5,7 @@ Specifically tests the coxModelCode lookup that was failing before.
 """
 
 import sys
-from csv_demo import build_vectorstore, build_chain
+from cli_app import build_vectorstore, build_chain
 
 def test_simple_queries():
     """Test simple spreadsheet-style queries."""

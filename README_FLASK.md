@@ -6,9 +6,9 @@ A web-based interface for the Vehicle Mapping RAG system, providing CSV file upl
 
 - 📁 **CSV File Upload**: Drag-and-drop or browse to upload vehicle mapping CSV files
 - 💬 **Interactive Chat**: Real-time chat interface for querying vehicle data
-- 🔄 **Session Management**: Each user gets their own RAG instance
 - 🎨 **Modern UI**: Clean, responsive design with loading indicators
 - 🚀 **Fast Queries**: Powered by local Ollama models (no API costs)
+- 🏠 **Local Deployment**: Simplified single-user architecture for local use
 
 ## Architecture
 
@@ -17,7 +17,7 @@ User Browser
     ↓
 Flask Web Server (app.py)
     ↓
-Vehicle RAG System (vehicle_rag.py)
+Global RAG Instance (vehicle_rag.py)
     ↓
 ├── CSV Processing (pandas)
 ├── Vector Store (Chroma)
@@ -88,17 +88,16 @@ Vehicle RAG System (vehicle_rag.py)
 
 Example queries:
 
-- "How many Cox trims are mapped to Audi A3 Sportback e-tron?"
-- "What Cox trims are available for BMW M5?"
-- "Which vehicles need body style mapping?"
-- "Show me vehicles with fuel type requirements"
-- "What's the Cox model code for Bentley Continental GT?"
+- "What is the cox model code for the Integra?"
+- "What trims are mapped to the audi sportback?"
+- "What trims are missing from the bmw_m5-touring in the current mapping based on this separate list of trims: {[{"code":"CS","name":"CS"},{"code":"Competition","name":"Competition"},{"code":"Touring","name":"Touring"}]}"
+- "List all vehicles that are electric"
 
 ### Resetting
 
 Click the "🔄 Upload New CSV" button to:
 
-- Clear the current session
+- Clear the current chat
 - Upload a different CSV file
 - Start a fresh chat
 
@@ -118,7 +117,7 @@ Upload and initialize RAG system with CSV file.
 {
   "success": true,
   "vehicle_count": 150,
-  "filename": "vdat_cox_mapping.csv",
+  "filename": "vehicle_mapping_sample.csv",
   "message": "Successfully initialized RAG system with 150 vehicles"
 }
 ```
@@ -157,7 +156,7 @@ Get current RAG system status.
   "status": {
     "initialized": true,
     "vehicle_count": 150,
-    "filename": "vdat_cox_mapping.csv",
+    "filename": "vehicle_mapping_sample.csv",
     "has_vectordb": true,
     "has_chain": true
   }
@@ -197,7 +196,7 @@ Health check endpoint.
 rag_poc_csv/
 ├── app.py                      # Flask application & API routes
 ├── vehicle_rag.py              # Core RAG logic (reusable class)
-├── csv_demo.py                 # Original CLI version (still works!)
+├── cli_app.py                 # Original CLI version (still works!)
 ├── requirements.txt            # Python dependencies
 ├── templates/
 │   └── index.html             # Main web interface
@@ -206,21 +205,21 @@ rag_poc_csv/
 │   └── app.js                 # Frontend JavaScript
 ├── uploads/                    # Temporary CSV storage (auto-created, gitignored)
 ├── data/
-│   └── vdat_cox_mapping.csv   # Example CSV data
+│   └── vehicle_mapping_sample.csv   # Example CSV data
 └── memory_bank/
     └── ... (project documentation)
 ```
 
-## Session Management
+## Deployment Notes
 
-The application uses **in-memory session management** with Flask sessions:
+The application uses a **single global RAG instance** optimized for local single-user deployments:
 
-- Each user gets a unique session ID
-- RAG instances are stored per session in a dictionary
-- Sessions persist during server runtime
-- Uploaded files are stored in session-specific directories
+- Simple, lightweight architecture
+- No session management overhead
+- Uploaded files are stored in a single `uploads/` directory
+- RAG state persists during server runtime
 
-**Note:** Sessions are cleared when the server restarts. For production use with multiple workers, consider implementing Redis-based session storage.
+**Note:** When the server restarts, you'll need to re-upload your CSV file. This is by design for local development use.
 
 ## Development
 
@@ -287,14 +286,14 @@ For production deployment:
 
 ## Comparison: CLI vs Web Interface
 
-| Feature        | CLI (`csv_demo.py`) | Web (`app.py`)            |
+| Feature        | CLI (`cli_app.py`)  | Web (`app.py`)            |
 | -------------- | ------------------- | ------------------------- |
 | Interface      | Terminal            | Browser                   |
 | File Upload    | Pre-configured path | Drag & drop / browse      |
-| Multiple Users | No                  | Yes (sessions)            |
-| Chat History   | Terminal only       | Persistent during session |
+| Multiple Users | No                  | No (single global instance)|
+| Chat History   | Terminal only       | In-browser during chat    |
 | Ease of Use    | Developer-friendly  | User-friendly             |
-| Deployment     | Local only          | Can be deployed to server |
+| Deployment     | Local only          | Local single-user         |
 
 Both versions use the same core RAG logic from `vehicle_rag.py`.
 
@@ -302,14 +301,14 @@ Both versions use the same core RAG logic from `vehicle_rag.py`.
 
 - File uploads are validated (extension, size)
 - Filenames are sanitized with `secure_filename()`
-- Files are stored in session-specific directories
+- Files are stored in `uploads/` directory
 - Input validation on all API endpoints
-- Session cookies are secure (generated with `secrets.token_hex()`)
 
-For production:
+**Note:** This application is designed for local single-user use. For production deployment or multi-user scenarios:
 
 - Add HTTPS/TLS
-- Implement rate limiting
+- Implement session management
+- Add rate limiting
 - Add authentication/authorization
 - Use environment variables for secrets
 - Enable CORS only for trusted origins
@@ -345,4 +344,4 @@ For issues or questions:
 
 1. Check the troubleshooting section
 2. Review memory_bank documentation
-3. Check original CLI app (`csv_demo.py`) to isolate web-specific issues
+3. Check original CLI app (`cli_app.py`) to isolate web-specific issues

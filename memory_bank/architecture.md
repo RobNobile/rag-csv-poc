@@ -4,7 +4,7 @@
 
 This project provides **two interfaces** sharing the same core RAG logic:
 
-1. **CLI Application** (`csv_demo.py`) - Terminal-based interactive chat
+1. **CLI Application** (`cli_app.py`) - Terminal-based interactive chat
 2. **Flask Web Application** (`app.py`) - Browser-based interface with REST API
 3. **Shared Core** (`vehicle_rag.py`) - Reusable RAG system class
 
@@ -28,7 +28,7 @@ User Browser
 ┌───────────────────────────────────────────┐
 │  Flask Web Server (app.py)                │
 │  ├── Routes: /, /api/upload, /api/chat   │
-│  ├── Session Management (in-memory)      │
+│  ├── Global RAG Instance                 │
 │  └── File Upload Handling                │
 └───────────────────────────────────────────┘
     ↓
@@ -52,36 +52,38 @@ User Browser
 ### Web Request Flow
 
 **Upload Flow:**
+
 ```
 1. User uploads CSV file via browser
 2. POST /api/upload → Flask receives file
-3. File saved to session-specific directory
-4. VehicleRAG.initialize_from_csv(filepath)
+3. File saved to uploads/ directory
+4. Global rag_instance.initialize_from_csv(filepath)
 5. CSV processed, vector store created
-6. Session ID stored, RAG instance cached
+6. RAG instance state updated
 7. JSON response: {success, vehicle_count, filename}
 8. Frontend switches to chat interface
 ```
 
 **Chat Flow:**
+
 ```
 1. User types question in chat
 2. POST /api/chat with {message: "question"}
-3. Flask retrieves RAG instance by session ID
-4. VehicleRAG.query(question)
+3. Flask checks rag_instance.initialized
+4. rag_instance.query(question)
 5. RAG chain: retrieval → context → LLM → response
 6. JSON response: {success, response, question}
 7. Frontend displays formatted response
 ```
 
-**Session Management:**
+**Architecture Design:**
+
 ```python
-# In-memory dictionary storing RAG instances
-rag_sessions = {
-    "session_id_1": VehicleRAG(),  # User 1's instance
-    "session_id_2": VehicleRAG(),  # User 2's instance
-    ...
-}
+# Single global RAG instance for local single-user deployment
+rag_instance = VehicleRAG()
+
+# All routes use this shared instance
+# Simple, lightweight, no session overhead
 ```
 
 ## High-Level Flow
@@ -98,8 +100,9 @@ rag_sessions = {
 The foundation of the system - processes vehicle mapping CSV into searchable records.
 
 #### Function Signature
+
 ```python
-def load_and_process_csv(csv_path="data/vdat_cox_mapping.csv"):
+def load_and_process_csv(csv_path="data/vehicle_mapping_sample.csv"):
     """
     Load the vehicle mapping CSV and process it into grouped records by vdatModelId.
     Each record contains rich searchable text and comprehensive metadata.
@@ -109,14 +112,17 @@ def load_and_process_csv(csv_path="data/vdat_cox_mapping.csv"):
 #### Processing Pipeline
 
 **Step 1: Load CSV with pandas**
+
 ```python
 df = pd.read_csv(csv_path)
 ```
 
 **Step 2: Group by vdatModelId**
+
 ```python
 for model_id, group in df.groupby('vdatModelId'):
 ```
+
 - Each vdatModelId represents one VDAT vehicle model
 - Multiple CSV rows (different Cox trims) are consolidated per vehicle
 - Handles one-to-many relationships (1 VDAT model → N Cox trims)
@@ -124,6 +130,7 @@ for model_id, group in df.groupby('vdatModelId'):
 **Step 3: Extract Unique Values**
 
 For each vehicle group, extract unique values across all rows:
+
 - Cox trim names and codes (multiple values expected)
 - Cox model names and codes (usually one, sometimes multiple)
 - Cox series names and codes
@@ -134,6 +141,7 @@ For each vehicle group, extract unique values across all rows:
 **Step 4: Build Rich Searchable Text**
 
 Creates comprehensive text content including:
+
 ```
 Model ID: {vdatModelId}
 Vehicle: {vdatMakeName} {vdatModelName}
@@ -153,6 +161,7 @@ Cox Fuel Type Codes: {all unique fuel type codes}
 **Step 5: Add Special Requirements**
 
 Identifies and includes special flags:
+
 - "Requires Body Style mapping" (if Needs Bodystyle = Yes)
 - "Requires Fuel Type mapping" (if Needs Fuel Type = Yes)
 - "Maps to multiple Cox models" (if Map to Multiple Cox Models = Yes)
@@ -161,6 +170,7 @@ Identifies and includes special flags:
 **Step 6: Build Comprehensive Metadata**
 
 Creates metadata dictionary for Chroma:
+
 ```python
 metadata = {
     "source": model_id,  # Used for citations
@@ -182,6 +192,7 @@ metadata = {
 **Step 7: Return Structured Data**
 
 Returns list of dictionaries:
+
 ```python
 [
     {
@@ -203,6 +214,7 @@ Returns list of dictionaries:
 Converts processed CSV data into a searchable vector database.
 
 #### Function Signature
+
 ```python
 def build_vectorstore(csv_data=None):
 ```
@@ -210,12 +222,14 @@ def build_vectorstore(csv_data=None):
 #### Processing Steps
 
 **Step 1: Load CSV Data**
+
 ```python
 if csv_data is None:
     csv_data = load_and_process_csv()
 ```
 
 **Step 2: Handle Empty Knowledge Base**
+
 ```python
 if not csv_data:
     csv_data = [{
@@ -225,14 +239,17 @@ if not csv_data:
 ```
 
 **Step 3: Text Splitting**
+
 ```python
 splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
 ```
+
 - **Chunk Size**: 800 characters (larger than basic demo to preserve vehicle context)
 - **Overlap**: 100 characters (ensures continuity across chunks)
 - Each vehicle record may be split into multiple chunks if text is long
 
 **Step 4: Chunk Generation**
+
 ```python
 for item in csv_data:
     text_content = item["text"]
@@ -246,14 +263,17 @@ for item in csv_data:
 ```
 
 **Step 5: Generate Embeddings**
+
 ```python
 embeddings = OllamaEmbeddings(model="mxbai-embed-large")
 ```
+
 - Model: mxbai-embed-large (335MB)
 - Dimensions: 1024 (embedding vector size)
 - Local execution via Ollama
 
 **Step 6: Create Vector Store**
+
 ```python
 vectordb = Chroma.from_texts(
     texts=chunks,
@@ -261,6 +281,7 @@ vectordb = Chroma.from_texts(
     metadatas=metas
 )
 ```
+
 - Storage: In-memory (ephemeral)
 - One vector per chunk
 - Metadata attached to each vector
@@ -270,6 +291,7 @@ vectordb = Chroma.from_texts(
 Formats retrieved documents with source citations and metadata enhancement.
 
 #### Function Signature
+
 ```python
 def format_docs(docs):
 ```
@@ -277,6 +299,7 @@ def format_docs(docs):
 #### Processing
 
 **Step 1: Extract Source and Content**
+
 ```python
 for d in docs:
     src = d.metadata.get("source", "kb")
@@ -284,21 +307,25 @@ for d in docs:
 ```
 
 **Step 2: Add Metadata Context**
+
 ```python
 if hasattr(d, 'metadata') and d.metadata:
     trim_count = d.metadata.get('trim_count', 0)
     if trim_count > 0:
         content += f"\n(This vehicle has {trim_count} Cox trim(s) mapped)"
 ```
+
 - Enhances retrieval quality by adding trim count
 - Helps LLM understand vehicle completeness
 
 **Step 3: Format with Citations**
+
 ```python
 lines.append(f"[{src}] {content}")
 ```
 
 **Output Format:**
+
 ```
 [audi_a3-sportback-e-tron] Model ID: audi_a3-sportback-e-tron
 Vehicle: Audi A3 Sportback e-tron
@@ -318,9 +345,11 @@ Constructs the retrieval-augmented generation pipeline.
 #### Components
 
 **Retriever Configuration**
+
 ```python
 retriever = vectordb.as_retriever(search_kwargs={"k": 5})
 ```
+
 - **k=5**: Retrieves top 5 most relevant chunks
 - **Search Type**: Similarity search (default)
 - **Distance Metric**: Cosine similarity
@@ -371,6 +400,7 @@ NOTE: Sources like [ram_power-wagon] represent vehicle model mappings in the dat
 ```
 
 **Key Prompt Features:**
+
 - **Mode Detection**: Automatically distinguishes simple vs. comparison queries
 - **Formatting Rules**: Consistent bullet-point formatting
 - **Citation Requirements**: Must include source tags
@@ -378,14 +408,17 @@ NOTE: Sources like [ram_power-wagon] represent vehicle model mappings in the dat
 - **Contextual Awareness**: Responds appropriately to query type
 
 **LLM Configuration**
+
 ```python
 llm = OllamaLLM(model="llama3.2:3b", temperature=0)
 ```
+
 - **Model**: llama3.2:3b (2GB, fast inference)
 - **Temperature**: 0 (deterministic responses)
 - **Local**: Runs via Ollama on localhost:11434
 
 **Chain Wiring**
+
 ```python
 chain = (
     {
@@ -399,6 +432,7 @@ chain = (
 ```
 
 **Data Flow:**
+
 1. Question comes in as string
 2. Retriever finds top-k relevant chunks
 3. format_docs() formats chunks with citations
@@ -411,6 +445,7 @@ chain = (
 Manages the interactive conversation lifecycle.
 
 #### Class Attributes
+
 ```python
 class ChatSession:
     def __init__(self):
@@ -447,6 +482,7 @@ def initialize_rag_system(self):
 ```
 
 **Performance:**
+
 - Runs once at startup
 - Takes ~2-5 seconds depending on CSV size
 - Subsequent queries are fast (~1-2 seconds)
@@ -555,7 +591,7 @@ def _signal_handler(self, signum, frame):
 ### Initialization Phase
 
 ```
-1. User runs: python csv_demo.py
+1. User runs: python cli_app.py
 2. main() creates ChatSession()
 3. ChatSession sets up signal handler
 4. initialize_rag_system() called:
@@ -616,11 +652,13 @@ Returns structured comparison
 ### Why Group by vdatModelId?
 
 **Problem**: CSV has one row per Cox trim mapping
+
 - Example: Audi A3 with 3 trims = 3 rows in CSV
 - Searching returns 3 separate chunks for same vehicle
 - Redundant information and poor user experience
 
 **Solution**: Group rows by vdatModelId
+
 - Consolidates all trims for a vehicle into one record
 - Single comprehensive searchable text per vehicle
 - Better retrieval quality and cleaner responses
@@ -628,6 +666,7 @@ Returns structured comparison
 ### Why Rich Searchable Text?
 
 **Advantages:**
+
 - Includes all Cox information (trims, models, series, body styles, fuel types)
 - Enables flexible searches (by name, code, ID, feature)
 - Better semantic matching for diverse queries
@@ -636,6 +675,7 @@ Returns structured comparison
 ### Why Chunk Size 800?
 
 **Rationale:**
+
 - Vehicles with many trims need more space
 - Preserves complete vehicle context in single chunk (usually)
 - Reduces chunk fragmentation
@@ -644,6 +684,7 @@ Returns structured comparison
 ### Why k=5 for Retrieval?
 
 **Benefits:**
+
 - Retrieves multiple vehicles for comparison
 - Handles cases where query matches multiple vehicles
 - Provides context for follow-up questions
@@ -652,6 +693,7 @@ Returns structured comparison
 ### Why Temperature 0?
 
 **Consistency:**
+
 - Deterministic responses for data queries
 - No creative variation needed
 - Accurate citation of sources
@@ -660,12 +702,14 @@ Returns structured comparison
 ### Why In-Memory Storage?
 
 **Advantages:**
+
 - Fast initialization (no disk I/O)
 - Simple development and testing
 - Good for datasets under 10,000 vehicles
 - Easy cleanup on exit
 
 **Trade-off:**
+
 - Must re-index on each run (~2-5 seconds)
 - For persistent storage, add `persist_directory` parameter
 
@@ -746,11 +790,13 @@ def _signal_handler(self, signum, frame):
 ### Scalability
 
 **Good Performance:**
+
 - Up to 1,000 vehicles: <3 seconds initialization
 - Up to 10,000 vehicles: <10 seconds initialization
 - Query speed unaffected by dataset size (k=5 retrieval)
 
 **Consider Optimization:**
+
 - 10,000+ vehicles: Use persistent storage
 - 50,000+ vehicles: Consider FAISS or other optimized vector stores
 - Very large datasets: Batch processing or server deployment
@@ -809,3 +855,4 @@ def export_results(self, query, response, filename="results.json"):
     with open(filename, 'a') as f:
         json.dump(data, f)
         f.write('\n')
+```

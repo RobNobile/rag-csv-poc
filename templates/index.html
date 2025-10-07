@@ -1,94 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vehicle Mapping RAG Chat</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
     <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>🚗 Vehicle Mapping RAG Chat</h1>
-            <p class="subtitle">AI-powered vehicle data queries with Cox automotive mapping</p>
-        </header>
+      <!-- Header -->
+      <header class="header">
+        <h1>🚗 Vehicle Mapping RAG Chat</h1>
+        <p class="subtitle">
+          AI-powered vehicle data queries with Cox automotive mapping
+        </p>
+      </header>
 
-        <!-- Upload Section -->
-        <section id="upload-section" class="section">
-            <div class="upload-card">
-                <h2>📁 Upload Vehicle Mapping CSV</h2>
-                <p class="info-text">Upload your CSV file containing VDAT to Cox vehicle mapping data</p>
+      <!-- Upload Section -->
+      <section id="upload-section" class="section">
+        <div class="upload-card">
+          <h2>📁 Upload Vehicle Mapping CSV</h2>
+          <p class="info-text">
+            Upload your CSV file containing VDAT to Cox vehicle mapping data
+          </p>
 
-                <div class="upload-area" id="upload-area">
-                    <div class="upload-icon">📤</div>
-                    <p class="upload-text">
-                        <strong>Drop your CSV file here</strong> or
-                        <label for="file-input" class="file-label">browse</label>
-                    </p>
-                    <input type="file" id="file-input" accept=".csv" hidden>
-                    <p class="upload-hint">Maximum file size: 10MB</p>
-                </div>
+          <div class="upload-area" id="upload-area">
+            <div class="upload-icon">📤</div>
+            <p class="upload-text">
+              <strong>Drop your CSV file here</strong> or
+              <label for="file-input" class="file-label">browse</label>
+            </p>
+            <input type="file" id="file-input" accept=".csv" hidden />
+            <p class="upload-hint">Maximum file size: 10MB</p>
+          </div>
 
-                <button id="upload-btn" class="btn btn-primary" disabled>
-                    Upload & Initialize
-                </button>
+          <button id="upload-btn" class="btn btn-primary" disabled>
+            Upload & Initialize
+          </button>
 
-                <div id="upload-status" class="status-message"></div>
+          <div id="upload-status" class="status-message"></div>
+        </div>
+      </section>
+
+      <!-- Chat Section -->
+      <section id="chat-section" class="section hidden">
+        <div class="chat-card">
+          <!-- System Status -->
+          <div class="system-status" id="system-status">
+            <span class="status-icon">✅</span>
+            <span id="status-text">System Ready</span>
+            <button id="reset-btn" class="btn btn-secondary btn-small">
+              🔄 Upload New CSV
+            </button>
+          </div>
+
+          <!-- Chat Messages -->
+          <div class="chat-messages" id="chat-messages">
+            <div class="message system-message">
+              <div class="message-content">
+                <strong>System initialized!</strong> You can now ask questions
+                about vehicle mapping data.
+              </div>
             </div>
-        </section>
+          </div>
 
-        <!-- Chat Section -->
-        <section id="chat-section" class="section hidden">
-            <div class="chat-card">
-                <!-- System Status -->
-                <div class="system-status" id="system-status">
-                    <span class="status-icon">✅</span>
-                    <span id="status-text">System Ready</span>
-                    <button id="reset-btn" class="btn btn-secondary btn-small">
-                        🔄 Upload New CSV
-                    </button>
-                </div>
-
-                <!-- Chat Messages -->
-                <div class="chat-messages" id="chat-messages">
-                    <div class="message system-message">
-                        <div class="message-content">
-                            <strong>System initialized!</strong> You can now ask questions about vehicle mapping data.
-                            <br><br>
-                            <strong>Example queries:</strong>
-                            <ul>
-                                <li>How many Cox trims are mapped to Audi A3 Sportback e-tron?</li>
-                                <li>What Cox trims are available for BMW M5?</li>
-                                <li>Which vehicles need body style mapping?</li>
-                                <li>Show me vehicles with fuel type requirements</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Chat Input -->
-                <div class="chat-input-container">
-                    <textarea
-                        id="chat-input"
-                        class="chat-input"
-                        placeholder="Ask a question about vehicle mapping data..."
-                        rows="1"
-                    ></textarea>
-                    <button id="send-btn" class="btn btn-primary">
-                        Send
-                    </button>
-                </div>
-            </div>
-        </section>
+          <!-- Chat Input -->
+          <div class="chat-input-container">
+            <textarea
+              id="chat-input"
+              class="chat-input"
+              placeholder="Ask a question about vehicle mapping data..."
+              rows="1"
+            ></textarea>
+            <button id="send-btn" class="btn btn-primary">Send</button>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay hidden">
-        <div class="spinner"></div>
-        <p id="loading-text">Processing...</p>
+      <div class="spinner"></div>
+      <p id="loading-text">Processing...</p>
     </div>
 
     <script src="{{ url_for('static', filename='app.js') }}"></script>
-</body>
+  </body>
 </html>

@@ -35,6 +35,7 @@
 ### Supporting Libraries
 
 - **numpy** (>=1.24.0): Numerical computing support
+
   - Required by pandas and various data processing operations
   - Used internally by embeddings and vector operations
 
@@ -58,6 +59,7 @@
 ### Flask Application
 
 - **flask** (>=3.0.0): Lightweight web framework for Python
+
   - **Purpose**: Powers the web interface (`app.py`)
   - Provides routing, request handling, and templating
   - Built-in development server for testing
@@ -102,6 +104,7 @@
 ### ruff.toml
 
 Basic linting and formatting configuration:
+
 - Line length: 88 characters
 - Target Python version: 3.8+
 - Auto-fixable rules enabled
@@ -110,6 +113,7 @@ Basic linting and formatting configuration:
 ### .vscode/settings.json (if present)
 
 VSCode integration for Ruff:
+
 - Ruff as default Python formatter
 - Format on save enabled
 - Auto-fix and import organization on save
@@ -148,12 +152,13 @@ ollama pull llama3.2:3b
 
 ### Vehicle Data CSV
 
-- **File Location**: `data/vdat_cox_mapping.csv`
+- **File Location**: `data/vehicle_mapping_sample.csv`
 - **Format**: Standard CSV with header row
 - **Encoding**: UTF-8 recommended
 - **Size**: Any size supported by pandas (tested up to 10,000 vehicles)
 
 **Required Columns:**
+
 - vdatModelId
 - vdatMakeName, vdatModelName
 - coxMakeName, coxMakeCode
@@ -164,6 +169,7 @@ ollama pull llama3.2:3b
 - coxFuelTypeCode, coxFuelTypeName
 
 **Optional Columns:**
+
 - Needs Bodystyle
 - Needs Fuel Type
 - Map to Multiple Cox Models
@@ -188,7 +194,7 @@ ollama pull mxbai-embed-large
 ollama pull llama3.2:3b
 
 # Verify CSV file exists
-ls data/vdat_cox_mapping.csv
+ls data/vehicle_mapping_sample.csv
 ```
 
 ### Verify Installation
@@ -204,7 +210,7 @@ curl http://localhost:11434/api/version
 ollama list
 
 # Test pandas CSV reading
-python -c "import pandas as pd; df = pd.read_csv('data/vdat_cox_mapping.csv'); print(f'Loaded {len(df)} rows')"
+python -c "import pandas as pd; df = pd.read_csv('data/vehicle_mapping_sample.csv'); print(f'Loaded {len(df)} rows')"
 ```
 
 ## Dependency Rationale
@@ -311,7 +317,7 @@ ollama pull llama3.2:1b
 
 ## Development Workflow
 
-With Ruff configured for csv_demo.py:
+With Ruff configured for cli_app.py:
 
 1. **Edit Code**: Make changes to the Python file
 2. **Auto-Format**: Code is automatically formatted on save
@@ -339,13 +345,13 @@ pip list | grep langchain
 
 ```bash
 # Test pandas can read your CSV
-python -c "import pandas as pd; print(pd.read_csv('data/vdat_cox_mapping.csv').head())"
+python -c "import pandas as pd; print(pd.read_csv('data/vehicle_mapping_sample.csv').head())"
 
 # Check for encoding issues
-python -c "import pandas as pd; print(pd.read_csv('data/vdat_cox_mapping.csv', encoding='utf-8').head())"
+python -c "import pandas as pd; print(pd.read_csv('data/vehicle_mapping_sample.csv', encoding='utf-8').head())"
 
 # Check for missing columns
-python -c "import pandas as pd; df = pd.read_csv('data/vdat_cox_mapping.csv'); print(df.columns.tolist())"
+python -c "import pandas as pd; df = pd.read_csv('data/vehicle_mapping_sample.csv'); print(df.columns.tolist())"
 ```
 
 ### Ollama Connection Issues
@@ -382,16 +388,16 @@ pip install -r requirements.txt
 
 ```bash
 # Check if file exists
-ls -lh data/vdat_cox_mapping.csv
+ls -lh data/vehicle_mapping_sample.csv
 
 # Check file permissions
-chmod 644 data/vdat_cox_mapping.csv
+chmod 644 data/vehicle_mapping_sample.csv
 
 # Validate CSV structure
-head -n 5 data/vdat_cox_mapping.csv
+head -n 5 data/vehicle_mapping_sample.csv
 
 # Check for special characters or encoding issues
-file data/vdat_cox_mapping.csv
+file data/vehicle_mapping_sample.csv
 ```
 
 ## Memory and Performance
@@ -421,13 +427,13 @@ For large CSV files:
 
 ```python
 # Read only needed columns
-df = pd.read_csv('data/vdat_cox_mapping.csv', usecols=['vdatModelId', 'vdatMakeName', ...])
+df = pd.read_csv('data/vehicle_mapping_sample.csv', usecols=['vdatModelId', 'vdatMakeName', ...])
 
 # Use efficient dtypes
-df = pd.read_csv('data/vdat_cox_mapping.csv', dtype={'vdatModelId': 'string', ...})
+df = pd.read_csv('data/vehicle_mapping_sample.csv', dtype={'vdatModelId': 'string', ...})
 
 # Process in chunks for very large files
-for chunk in pd.read_csv('data/vdat_cox_mapping.csv', chunksize=1000):
+for chunk in pd.read_csv('data/vehicle_mapping_sample.csv', chunksize=1000):
     process(chunk)
 ```
 

@@ -11,7 +11,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
 
 # ---------------- Knowledge base from CSV ---------------- #
-def load_and_process_csv(csv_path="data/vdat_cox_mapping.csv"):
+def load_and_process_csv(csv_path="data/vehicle_mapping_sample.csv"):
     """
     Load the vehicle mapping CSV and process it into grouped records by vdatModelId.
     Each record contains rich searchable text and comprehensive metadata.
@@ -278,7 +278,7 @@ class ChatSession:
             print(
                 "   Make sure Ollama is running with models: mxbai-embed-large, llama3.2:3b"
             )
-            print("   Also ensure data/vdat_cox_mapping.csv exists and pandas is installed")
+            print("   Also ensure data/vehicle_mapping_sample.csv exists and pandas is installed")
             return False
 
     def display_welcome(self):
@@ -318,23 +318,10 @@ Available Commands:
   q             - Quick exit
 
 Example Questions:
-
-🚗 Vehicle Mapping Queries:
-  • "How many Cox trims are mapped to Audi A3 Sportback e-tron?"
-  • "What Cox trims are available for BMW M5 Touring?"
-  • "Which models need body style mapping?"
-  • "Show me all electric vehicles in the database"
-  • "What's the Cox model code for Bentley Continental GT?"
-
-🔍 Search by ID or Name:
-  • "What trims are mapped to audi_a3-sportback-e-tron?"
-  • "Tell me about Chevrolet Corvette ZR1"
-  • "Which Dodge models have SRT trims?"
-
-💡 Tips:
-  - Sources like [audi_a3-sportback-e-tron] refer to vehicle model IDs
-  - You can search by make/model name or technical vdatModelId
-  - Ask follow-up questions in the same session!
+  • "What is the cox model code for the Integra?"
+  • "What trims are mapped to the audi sportback?"
+  • "What trims are missing from the bmw_m5-touring in the current mapping based on this separate list of trims: {[{"code":"CS","name":"CS"},{"code":"Competition","name":"Competition"},{"code":"Touring","name":"Touring"}]}"
+  • "List all vehicles that are electric"
 
 ==================
 """

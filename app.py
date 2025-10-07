@@ -7,14 +7,13 @@ with CSV file upload and interactive chat functionality.
 """
 
 import os
-from flask import Flask, render_template, request, jsonify, session
+import atexit
+from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
-import secrets
 from vehicle_rag import VehicleRAG
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(32)  # Generate secure secret key
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -27,36 +26,13 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 # Create upload directory if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Session manager - stores RAG instances per session
-rag_sessions = {}
+# Single global RAG instance
+rag_instance = VehicleRAG()
 
 
 def allowed_file(filename):
     """Check if file extension is allowed."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def get_or_create_rag():
-    """Get or create RAG instance for current session."""
-    session_id = session.get('session_id')
-
-    # Create new session if needed
-    if not session_id:
-        session_id = secrets.token_hex(16)
-        session['session_id'] = session_id
-
-    # Get or create RAG instance
-    if session_id not in rag_sessions:
-        rag_sessions[session_id] = VehicleRAG()
-
-    return rag_sessions[session_id]
-
-
-def cleanup_old_sessions():
-    """Clean up old sessions (optional - can be enhanced with timestamps)."""
-    # For now, we keep all sessions in memory
-    # In production, implement session timeout and cleanup
-    pass
 
 
 @app.route('/')
@@ -99,19 +75,11 @@ def upload_file():
 
         # Save file securely
         filename = secure_filename(file.filename)
-        session_id = session.get('session_id', secrets.token_hex(16))
-        session['session_id'] = session_id
-
-        # Create session-specific upload directory
-        session_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], session_id)
-        os.makedirs(session_upload_dir, exist_ok=True)
-
-        filepath = os.path.join(session_upload_dir, filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
         # Initialize RAG system
-        rag = get_or_create_rag()
-        result = rag.initialize_from_csv(filepath)
+        result = rag_instance.initialize_from_csv(filepath)
 
         if result['success']:
             return jsonify(result), 200
@@ -157,11 +125,8 @@ def chat():
                 'error': 'Message cannot be empty'
             }), 400
 
-        # Get RAG instance
-        rag = get_or_create_rag()
-
         # Check if RAG is initialized
-        if not rag.initialized:
+        if not rag_instance.initialized:
             return jsonify({
                 'success': False,
                 'error': 'RAG system not initialized',
@@ -169,7 +134,7 @@ def chat():
             }), 400
 
         # Process query
-        result = rag.query(message)
+        result = rag_instance.query(message)
 
         return jsonify(result), 200
 
@@ -190,8 +155,7 @@ def status():
         JSON response with system status and statistics
     """
     try:
-        rag = get_or_create_rag()
-        stats = rag.get_stats()
+        stats = rag_instance.get_stats()
 
         return jsonify({
             'success': True,
@@ -208,23 +172,22 @@ def status():
 @app.route('/api/reset', methods=['POST'])
 def reset():
     """
-    Reset the RAG system for current session.
+    Reset the RAG system.
 
     Returns:
         JSON response confirming reset
     """
     try:
-        session_id = session.get('session_id')
+        # Reset RAG instance
+        rag_instance.reset()
 
-        if session_id and session_id in rag_sessions:
-            # Reset RAG instance
-            rag_sessions[session_id].reset()
-
-            # Clean up uploaded files (optional)
-            session_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], session_id)
-            if os.path.exists(session_upload_dir):
-                import shutil
-                shutil.rmtree(session_upload_dir)
+        # Clean up uploaded files
+        if os.path.exists(app.config['UPLOAD_FOLDER']):
+            import shutil
+            for item in os.listdir(app.config['UPLOAD_FOLDER']):
+                item_path = os.path.join(app.config['UPLOAD_FOLDER'], item)
+                if os.path.isfile(item_path):
+                    os.remove(item_path)
 
         return jsonify({
             'success': True,
@@ -290,22 +253,30 @@ def internal_error(error):
     }), 500
 
 
+def cleanup_on_shutdown():
+    """Clean up uploaded files on shutdown."""
+    if os.path.exists(UPLOAD_FOLDER):
+        for item in os.listdir(UPLOAD_FOLDER):
+            item_path = os.path.join(UPLOAD_FOLDER, item)
+            if os.path.isfile(item_path):
+                try:
+                    os.remove(item_path)
+                except Exception:
+                    pass  # Silently ignore cleanup errors
+
+
+# Register cleanup function to run on shutdown
+atexit.register(cleanup_on_shutdown)
+
+
 if __name__ == '__main__':
     print("=" * 50)
     print("🚗 Vehicle Mapping RAG Web Application")
     print("=" * 50)
-    print("\n📝 Features:")
-    print("  • CSV file upload")
-    print("  • Interactive chat interface")
-    print("  • Session-based RAG instances")
-    print("\n🔧 Requirements:")
-    print("  • Ollama running with models:")
-    print("    - mxbai-embed-large (embeddings)")
-    print("    - llama3.2:3b (LLM)")
     print("\n🌐 Starting server...")
     print("  • Open http://localhost:5001 in your browser")
     print("=" * 50)
     print()
 
     # Run Flask app
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=False, host='0.0.0.0', port=5001)

@@ -2,8 +2,8 @@
 """
 Vehicle Mapping RAG System - Reusable Core Logic
 
-This module provides a reusable VehicleRAG class that can be instantiated
-per user session in a web application or used in CLI applications.
+This module provides a reusable VehicleRAG class
+in web applications or CLI applications.
 """
 
 import pandas as pd
@@ -20,8 +20,7 @@ class VehicleRAG:
     A reusable RAG system for querying vehicle mapping data.
 
     This class encapsulates all RAG functionality including CSV processing,
-    vector store creation, and query handling. It can be instantiated per
-    user session in web applications.
+    vector store creation, and query handling.
     """
 
     def __init__(self):
@@ -82,10 +81,21 @@ class VehicleRAG:
                 cox_body_styles = group['coxBodyStyleName'].dropna().unique().tolist() if 'coxBodyStyleName' in group.columns else []
                 cox_body_style_codes = group['coxBodyStyleCode'].dropna().unique().tolist() if 'coxBodyStyleCode' in group.columns else []
 
+                # Get fuel type names for display
+                fuel_types = group['coxFuelTypeName'].dropna().unique().tolist() if 'coxFuelTypeName' in group.columns else []
+
                 # Build comprehensive searchable text with ALL CSV columns
+                # Put fuel type information early and prominently for better retrieval
+                fuel_type_info = ""
+                if cox_fuel_type_codes:
+                    fuel_type_info = f"FUEL TYPE: {', '.join(cox_fuel_type_codes)}"
+                    if fuel_types:
+                        fuel_type_info += f" ({', '.join(fuel_types)})"
+
                 searchable_text = f"""
                     Model ID: {model_id}
                     Vehicle: {make_model}
+                    {fuel_type_info}
                     Cox Make: {cox_make}
                     Cox Make Code: {cox_make_code}
                     Cox Series: {', '.join(cox_series) if cox_series else ''}
@@ -96,7 +106,6 @@ class VehicleRAG:
                     Cox Trim Codes: {', '.join(cox_trim_codes)}
                     Cox Body Styles: {', '.join(cox_body_styles) if cox_body_styles else ''}
                     Cox Body Style Codes: {', '.join(cox_body_style_codes) if cox_body_style_codes else ''}
-                    Cox Fuel Type Codes: {', '.join(cox_fuel_type_codes) if cox_fuel_type_codes else ''}
                 """
 
                 # Add special requirements if they exist
@@ -112,11 +121,6 @@ class VehicleRAG:
 
                 if special_flags:
                     searchable_text += f"\nSpecial Requirements: {', '.join(special_flags)}"
-
-                # Add fuel type information if available
-                fuel_types = group['coxFuelTypeName'].dropna().unique().tolist() if 'coxFuelTypeName' in group.columns else []
-                if fuel_types:
-                    searchable_text += f"\nFuel Types: {', '.join(fuel_types)}"
 
                 # Build comprehensive metadata (convert lists to strings for Chroma compatibility)
                 metadata = {
@@ -230,6 +234,23 @@ class VehicleRAG:
         - Cite sources using their [source] tags (which represent vdatModelId values)
         - Use clean, bullet-point formatting for trim lists
         - Be contextually aware of what the user is asking
+
+        SOURCE CITATION RULES:
+        - Each document in the context has a [source] tag at the beginning (e.g., [audi_a3-sportback-e-tron])
+        - You MUST use the [source] tag from the SAME document that contains the answer to the question
+        - NEVER use a [source] tag from a different document than the one containing the information
+        - The source ID should logically match the vehicle you're discussing (e.g., [audi_*] for Audi vehicles, [bmw_*] for BMW)
+        - If answering about "Audi Sportback", the source MUST be an audi_* identifier, NOT ram_* or any other make
+        - CRITICAL: Match each piece of information to its correct source document before citing
+        - When you see trim information in the context, use the [source] from THAT specific document
+
+        FUEL TYPE QUERIES:
+        - When users ask about vehicle fuel types (electric, hybrid, gas, diesel, etc.), you MUST filter based on the coxFuelTypeCode field found in the context
+        - Electric vehicles have coxFuelTypeCode = "ELE" (look for "FUEL TYPE: ELE" in the context)
+        - STRICT RULE: ONLY list vehicles that explicitly show "FUEL TYPE: ELE" in their context. Do NOT include vehicles just because they have "electric" in their name or trim name
+        - If a vehicle's context does NOT contain "FUEL TYPE: ELE", it is NOT an electric vehicle, even if "electric" appears in the vehicle name
+        - The vdatModelId and vehicle names are just identifiers - NEVER use them for filtering fuel types
+        - Example: "Show me all electric vehicles" should return ONLY vehicles where the context explicitly shows "FUEL TYPE: ELE"
 
         RESPONSE PATTERNS:
 

@@ -5,6 +5,7 @@
 ### 1. Start the Server
 
 **Prerequisites:**
+
 - Python 3.8+ with virtual environment
 - Ollama installed and running locally:
   1. Pull required models:
@@ -21,16 +22,19 @@
 **Installation & Startup:**
 
 1. **Activate virtual environment** (if not already activated):
+
    ```bash
    source venv/bin/activate
    ```
 
 2. **Install dependencies**:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 3. **Start the Flask server**:
+
    ```bash
    python app.py
    ```
@@ -42,11 +46,14 @@
    ```
 
 ### 2. Open in Browser
+
 Navigate to: **http://localhost:5001**
 
 ### 3. Upload CSV & Chat
+
 1. **Upload your CSV file**:
-   - Drag and drop `data/vdat_cox_mapping.csv` onto the upload area
+
+   - Drag and drop `data/vehicle_mapping_sample.csv` onto the upload area
    - Or click to browse and select the file
    - Click "Upload & Initialize"
    - Wait 2-5 seconds for processing
@@ -61,33 +68,29 @@ Navigate to: **http://localhost:5001**
 Once your CSV is uploaded, try these queries:
 
 ```
-How many Cox trims are mapped to Audi A3 Sportback e-tron?
+What is the cox model code for the Integra?
 ```
 
 ```
-What Cox trims are available for BMW M5?
+What trims are mapped to the audi sportback?
 ```
 
 ```
-Which vehicles need body style mapping?
+What trims are missing from the bmw_m5-touring in the current mapping based on this separate list of trims: {[{"code":"CS","name":"CS"},{"code":"Competition","name":"Competition"},{"code":"Touring","name":"Touring"}]}
 ```
 
 ```
-Show me all vehicles with fuel type requirements
-```
-
-```
-What's the Cox model code for Bentley Continental GT?
+List all vehicles that are electric
 ```
 
 ## 🎨 Features You'll See
 
 - **Drag & Drop Upload**: Just drag your CSV file onto the upload area
 - **Real-time Chat**: Instant responses with formatted bullet points
-- **Session Persistence**: Your data stays loaded during your session
 - **Easy Reset**: Upload a new CSV anytime with the reset button
 - **Loading Indicators**: Visual feedback during processing
 - **Responsive Design**: Works on desktop, tablet, and mobile
+- **Local Single-User**: Simplified architecture for personal use
 
 ## 🔄 Uploading a Different CSV
 
@@ -99,6 +102,7 @@ What's the Cox model code for Bentley Continental GT?
 ## ⚠️ Important Notes
 
 - **CSV Requirements**: Your CSV must have these columns:
+
   - `vdatModelId`, `vdatMakeName`, `vdatModelName`
   - `coxMakeName`, `coxTrimName`
 
@@ -116,25 +120,29 @@ To stop the server, press **Ctrl+C** in the terminal.
 
 - Full documentation: See `README_FLASK.md`
 - API documentation: See `README_FLASK.md` → API Endpoints section
-- Original CLI version: Run `python csv_demo.py`
+- Original CLI version: Run `python cli_app.py`
 
 ## 🐛 Troubleshooting
 
 **Browser shows "Connection refused"**
+
 - Make sure the server is running (check terminal)
 - Try http://127.0.0.1:5001 instead of localhost
 
 **Upload fails**
+
 - Check that your CSV has the required columns
 - Verify file size is under 10MB
 - Make sure file extension is `.csv`
 
 **Slow responses**
+
 - First query may take 2-3 seconds (Ollama warm-up)
 - Subsequent queries should be faster (1-2 seconds)
 - Initialization takes 2-5 seconds (one-time per upload)
 
 **Ollama errors**
+
 - Verify Ollama is running: `ollama list`
 - Check models are available:
   ```bash
@@ -145,8 +153,9 @@ To stop the server, press **Ctrl+C** in the terminal.
 ## 🎯 What's Next?
 
 After testing the web interface:
+
 1. Try different types of queries
-2. Compare responses with the CLI version (`python csv_demo.py`)
+2. Compare responses with the CLI version (`python cli_app.py`)
 3. Test with your own vehicle mapping CSV files
 4. Explore the API endpoints for programmatic access
 

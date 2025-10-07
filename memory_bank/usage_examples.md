@@ -5,13 +5,15 @@
 This system provides two ways to interact with the Vehicle Mapping RAG:
 
 ### 🌐 Web Interface (Flask)
+
 - **Start**: `python app.py` → Open http://localhost:5001
 - **Features**: Drag-and-drop CSV upload, browser-based chat, session management
 - **Best For**: Business users, demos, non-technical stakeholders
 - **Documentation**: See `README_FLASK.md` for detailed web interface usage
 
 ### 💻 CLI Interface (Terminal)
-- **Start**: `python csv_demo.py`
+
+- **Start**: `python cli_app.py`
 - **Features**: Terminal-based chat, command system, pre-configured CSV path
 - **Best For**: Developers, automation, scripting
 - **Documentation**: Examples below focus on CLI usage
@@ -28,7 +30,7 @@ cd rag_poc_csv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Run the vehicle mapping RAG chat
-python csv_demo.py
+python cli_app.py
 ```
 
 ### Expected Startup Output
@@ -94,18 +96,10 @@ Available Commands:
   q             - Quick exit
 
 Example Questions:
-
-🚗 Vehicle Mapping Queries:
-  • "How many Cox trims are mapped to Audi A3 Sportback e-tron?"
-  • "What Cox trims are available for BMW M5 Touring?"
-  • "Which models need body style mapping?"
-  • "Show me all electric vehicles in the database"
-  • "What's the Cox model code for Bentley Continental GT?"
-
-🔍 Search by ID or Name:
-  • "What trims are mapped to audi_a3-sportback-e-tron?"
-  • "Tell me about Chevrolet Corvette ZR1"
-  • "Which Dodge models have SRT trims?"
+  • "What is the cox model code for the Integra?"
+  • "What trims are mapped to the audi sportback?"
+  • "What trims are missing from the bmw_m5-touring in the current mapping based on this separate list of trims: {[{"code":"CS","name":"CS"},{"code":"Competition","name":"Competition"},{"code":"Touring","name":"Touring"}]}"
+  • "List all vehicles that are electric"
 
 💡 Tips:
   - Sources like [audi_a3-sportback-e-tron] refer to vehicle model IDs
@@ -259,6 +253,7 @@ Ctrl+C   # Signal-based graceful shutdown
 ```
 
 **Expected Response Format:**
+
 ```
 Based on [source], the [Vehicle] has X Cox trims:
 • Trim 1
@@ -343,7 +338,7 @@ Based on [source], the [Vehicle] has X Cox trims:
 
 ### 1. Using a Different CSV File
 
-Edit `csv_demo.py`:
+Edit `cli_app.py`:
 
 ```python
 def load_and_process_csv(csv_path="data/alternative_mapping.csv"):
@@ -509,7 +504,7 @@ Create a script to process multiple queries:
 
 ```python
 #!/usr/bin/env python3
-from csv_demo import ChatSession
+from cli_app import ChatSession
 
 def batch_process_queries(queries):
     """Process a list of queries and return results."""
@@ -577,7 +572,7 @@ class ChatSession:
 ### Filter CSV Before Loading
 
 ```python
-def load_and_process_csv(csv_path="data/vdat_cox_mapping.csv", filter_make=None):
+def load_and_process_csv(csv_path="data/vehicle_mapping_sample.csv", filter_make=None):
     """Load CSV with optional filtering."""
     df = pd.read_csv(csv_path)
 
@@ -609,7 +604,7 @@ def validate_csv_structure(csv_path):
 
 # Use before processing
 try:
-    validate_csv_structure("data/vdat_cox_mapping.csv")
+    validate_csv_structure("data/vehicle_mapping_sample.csv")
     csv_data = load_and_process_csv()
 except ValueError as e:
     print(f"❌ CSV validation failed: {e}")
@@ -673,7 +668,7 @@ if __name__ == "__main__":
     main()
 ```
 
-Run with: `python csv_demo.py --test-csv`
+Run with: `python cli_app.py --test-csv`
 
 ### Verify Vector Store
 
@@ -697,19 +692,22 @@ def initialize_rag_system(self):
 ### Issue: No results for certain queries
 
 **Solution 1**: Increase k value
+
 ```python
 retriever = vectordb.as_retriever(search_kwargs={"k": 10})
 ```
 
 **Solution 2**: Check if vehicle exists in CSV
+
 ```python
-df = pd.read_csv('data/vdat_cox_mapping.csv')
+df = pd.read_csv('data/vehicle_mapping_sample.csv')
 print(df[df['vdatMakeName'].str.contains('Audi', case=False)])
 ```
 
 ### Issue: Slow initialization
 
 **Solution**: Enable persistent storage
+
 ```python
 vectordb = Chroma.from_texts(
     texts=chunks,
@@ -722,6 +720,7 @@ vectordb = Chroma.from_texts(
 ### Issue: Out of memory with large CSV
 
 **Solution**: Process CSV in chunks
+
 ```python
 def load_and_process_csv_chunked(csv_path, chunk_size=1000):
     """Process large CSV in chunks."""
@@ -737,6 +736,7 @@ def load_and_process_csv_chunked(csv_path, chunk_size=1000):
 ### Issue: Inconsistent responses
 
 **Solution**: Set temperature to 0
+
 ```python
 llm = OllamaLLM(model="llama3.2:3b", temperature=0)
 ```

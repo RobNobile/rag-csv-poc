@@ -9,6 +9,7 @@ This project implements an interactive RAG (Retrieval-Augmented Generation) chat
 The system provides **two interfaces** to suit different user needs:
 
 ### 🌐 Web Application (`app.py`)
+
 - **Purpose**: User-friendly interface for business users and demos
 - **Features**:
   - Drag-and-drop CSV upload
@@ -19,7 +20,8 @@ The system provides **two interfaces** to suit different user needs:
 - **Best For**: Business analysts, QA teams, demos, non-technical users
 - **Technology**: Flask web framework with REST API
 
-### 💻 Command Line Interface (`csv_demo.py`)
+### 💻 Command Line Interface (`cli_app.py`)
+
 - **Purpose**: Developer-friendly interface for automation and scripting
 - **Features**:
   - Terminal-based interaction
@@ -30,7 +32,9 @@ The system provides **two interfaces** to suit different user needs:
 - **Technology**: Python interactive console
 
 ### Shared Core Logic (`vehicle_rag.py`)
+
 Both interfaces use the same underlying RAG system:
+
 - Identical CSV processing and grouping logic
 - Same vector store and retrieval chain
 - Consistent query capabilities and response formats
@@ -55,6 +59,7 @@ The system manages mappings between two automotive data systems:
 - **Cox Automotive**: Industry-standard vehicle classification system (target system)
 
 Each VDAT vehicle model may map to:
+
 - Multiple Cox trims
 - Multiple Cox models (in some cases)
 - Different body styles and fuel types
@@ -123,24 +128,12 @@ Manages the interactive conversation lifecycle:
 
 ### Example Queries
 
-**Simple Lookups:**
-- "How many Cox trims are mapped to Audi A3 Sportback e-tron?"
-- "What Cox trims are available for BMW M5 Touring?"
-- "Show me the Cox model codes for Chevrolet Corvette ZR1"
+**Example Queries:**
 
-**Special Requirements:**
-- "Which vehicles need body style mapping?"
-- "Show me models that map to multiple Cox trims"
-- "What fuel types are available for electric vehicles?"
-
-**Comparison Queries:**
-- "I have these trims: [list]. What's missing for this vehicle?"
-- "Compare my trim list against the database for BMW M5"
-
-**Search Patterns:**
-- Search by make: "Show me all Audi models"
-- Search by ID: "What's in audi_a3-sportback-e-tron?"
-- Search by feature: "Which Dodge models have SRT trims?"
+- "What is the cox model code for the Integra?"
+- "What trims are mapped to the audi sportback?"
+- "What trims are missing from the bmw_m5-touring in the current mapping based on this separate list of trims: {[{"code":"CS","name":"CS"},{"code":"Competition","name":"Competition"},{"code":"Touring","name":"Touring"}]}"
+- "List all vehicles that are electric"
 
 ## Key Features
 
@@ -175,12 +168,14 @@ Manages the interactive conversation lifecycle:
 Activated when user asks straightforward questions without providing reference data.
 
 **Characteristics:**
+
 - Lists current Cox trims in bullet format
 - Includes source citation
 - Shows trim count if relevant
 - No mention of "missing" trims
 
 **Example:**
+
 ```
 User: "What Cox trims are mapped to BMW M5 Touring?"
 
@@ -194,12 +189,14 @@ System: "Based on [bmw_m5-touring], the BMW M5 Touring has these Cox trims:
 Activated when user explicitly provides a reference list to compare against.
 
 **Characteristics:**
+
 - Shows current trims first
 - Then separately lists missing trims
 - Uses bullet format for both sections
 - Only activates when reference data is provided
 
 **Example:**
+
 ```
 User: "I have ['M5 Competition', 'M5 CS', 'M5 Base']. What's missing for BMW M5 Touring?"
 
@@ -223,7 +220,7 @@ Comparing against your reference list, the missing trim is:
 
 ### Data Requirements
 
-- **CSV File**: `data/vdat_cox_mapping.csv`
+- **CSV File**: `data/vehicle_mapping_sample.csv`
 - **Required Columns**: vdatModelId, make/model names, Cox trim/model information
 - **Optional Columns**: Special requirement flags
 - **Format**: Standard CSV with header row
@@ -240,6 +237,7 @@ Comparing against your reference list, the missing trim is:
 ### Primary Users
 
 **For Web Interface:**
+
 - **Business Analysts**: Query vehicle data without technical setup
 - **QA Engineers**: Interactive testing of mapping completeness
 - **Support Teams**: Quick customer-facing data lookups
@@ -247,6 +245,7 @@ Comparing against your reference list, the missing trim is:
 - **Non-Technical Stakeholders**: Self-service data queries
 
 **For CLI Interface:**
+
 - **Developers**: Automation and scripting integration
 - **Data Engineers**: Batch processing and testing
 - **DevOps**: Integration with CI/CD pipelines

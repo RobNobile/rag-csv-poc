@@ -5,7 +5,7 @@ Tests both simple queries and comparison queries to ensure proper formatting.
 """
 
 import sys
-from csv_demo import build_vectorstore, build_chain
+from cli_app import build_vectorstore, build_chain
 
 def test_consistency():
     """Test the consistency and formatting of responses."""

@@ -8,8 +8,8 @@ This is a specialized RAG (Retrieval-Augmented Generation) chat system for query
 
 **Core RAG System:**
 - `vehicle_rag.py` - Reusable RAG class (shared by CLI and web)
-- `csv_demo.py` - CLI vehicle mapping RAG chat system
-- `data/vdat_cox_mapping.csv` - Vehicle mapping CSV data (VDAT to Cox)
+- `cli_app.py` - CLI vehicle mapping RAG chat system
+- `data/vehicle_mapping_sample.csv` - Vehicle mapping CSV data (VDAT to Cox)
 
 **Web Application:**
 - `app.py` - Flask web server with REST API
@@ -30,7 +30,7 @@ This is a specialized RAG (Retrieval-Augmented Generation) chat system for query
 1. Always activate virtual environment before running code
 2. Use memory_bank documentation for project context
 3. Test with Ollama models: mxbai-embed-large and llama3.2:3b
-4. CSV file must exist at `data/vdat_cox_mapping.csv` with required columns
+4. CSV file must exist at `data/vehicle_mapping_sample.csv` with required columns
 5. Use "npm start" not "npm run start" for any web servers (though not applicable to this Python project)
 
 ## Dependencies
@@ -42,7 +42,7 @@ This is a specialized RAG (Retrieval-Augmented Generation) chat system for query
 
 ## CSV Data Requirements
 
-The system requires a CSV file at `data/vdat_cox_mapping.csv` with these columns:
+The system requires a CSV file at `data/vehicle_mapping_sample.csv` with these columns:
 
 **Required:**
 - vdatModelId, vdatMakeName, vdatModelName
@@ -64,17 +64,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Run the vehicle mapping RAG chat
-python csv_demo.py
+python cli_app.py
 
 # Check Ollama models
 ollama list
 
 # Verify CSV exists and structure
-ls -lh data/vdat_cox_mapping.csv
-head -n 1 data/vdat_cox_mapping.csv
+ls -lh data/vehicle_mapping_sample.csv
+head -n 1 data/vehicle_mapping_sample.csv
 
 # Test pandas can read CSV
-python -c "import pandas as pd; print(pd.read_csv('data/vdat_cox_mapping.csv').shape)"
+python -c "import pandas as pd; print(pd.read_csv('data/vehicle_mapping_sample.csv').shape)"
 ```
 
 ## Memory Bank Usage
@@ -89,7 +89,7 @@ Always check and update memory_bank files when making significant changes:
 ## Query Examples
 
 The system supports various query types:
-- Simple trim queries: "How many Cox trims for Audi A3 Sportback e-tron?"
-- Comparison queries: "I have [list]. What's missing for BMW M5?"
-- Special requirements: "Which vehicles need body style mapping?"
-- Search by ID: "What's in audi_a3-sportback-e-tron?"
+- Simple lookup: "What is the cox model code for the Integra?"
+- Trim queries: "What trims are mapped to the audi sportback?"
+- Comparison queries: "What trims are missing from the bmw_m5-touring in the current mapping based on this separate list of trims: {[{"code":"CS","name":"CS"},{"code":"Competition","name":"Competition"},{"code":"Touring","name":"Touring"}]}"
+- Filtering: "List all vehicles that are electric"
